@@ -19,18 +19,16 @@ class Response:
     def __init__(self):
         self.__response=""
     def println(self, message):
-        self.__response=self.__response,message,"\r\n"
+        self.__response=self.__response+message+"\r\n"
     def getResponse(self):
         return self.__response
     
     
 class HTTPServer:
-    global host, port;
-    global serverSocket;
-    global rawRequest;
     def __init__(self, host, port):
         self.host = host;
         self.port = port;
+        self.callbacks={}
     
     def doGet(self, request, response):
         pass
@@ -46,42 +44,47 @@ class HTTPServer:
         
     def __handlerRequest(self, connection, rawRequest):
         self._rawRequest = rawRequest
-        print self._rawRequest
+        #print self._rawRequest
         tokenizedLine=self._rawRequest.split('\n')
         requestLine=tokenizedLine[0]
         attributes = self.__handlerAttributes(tokenizedLine[1:])
-        
-        #print tokenizedLine
-        
         tokenizedLine = requestLine.split()
+    #print tokenizedLine
         attributes["request-method"]=tokenizedLine[0]
+    #print attributes["request-method"]
         attributes["requisition"]=tokenizedLine[1]
         attributes["http-version"]=tokenizedLine[2]
         request_object = attributes["requisition"]
-        print request_object
         if request_object.startswith('/'):
             request_object=request_object[1:]
         #print request_object
+    #print "passou aqui"
         objects=request_object.split('?')
         #attributes["object-requested"]
         #print objects
-        attributes["object_requested"]=objects[0]
+        attributes["object-requested"]=objects[0]
         map={}
         if len(objects)>1:
             
                 objects=objects[1].split('&')
-                
+                #print objects
                 for i in objects:
                     iObject = i.split('=')
                     map[iObject[0]]=iObject[1]
+    #print map
         attributes["parameters"]=map
         request = Request(self._rawRequest, attributes)
         response = Response()
+    #print attributes
         if attributes["request-method"]=='GET':
-            self.doGet(resquest, response)
+           self.doGet(request, response)
         elif attributes["request-method"]=='POST':
             self.doPost(resquest, response)
-        
+        rsp = response.getResponse()
+        print rsp
+        #print rsp
+        connection.send(rsp)
+    #connection.close()
     def startServer(self):
         tcp = socket(AF_INET, SOCK_STREAM)
         orig = (self.host, self.port)
@@ -95,23 +98,12 @@ class HTTPServer:
             request = con.recv(1024)
             #print request
             try:
-                self.__handlerRequest(con, request)
+               self.__handlerRequest(con, request)
             except Exception:
-                con.send('Bad Request Message')
-            con.send('retorno')
+               con.send('Bad Request Message')
+            #con.send('retorno')
             #print 'Finalizando conexao do cliente', cliente
             con.close()
+    def addCallBack(self, key, callback):
+        self.callbacks[key]=callback
             
-
-class MyServer(HTTPServer):
-    def __init__(self,host, port):
-        HTTPServer.__init__(self, host, port)
-    def doGet(self, connection, params):
-        print 'classe filha'
-        #print params 
-        #print connection
-        #connection.close()
-
-
-server = MyServer('',5003)
-server.startServer()
