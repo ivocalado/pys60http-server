@@ -1,0 +1,1 @@
+This project aims the build of a HTTP server to Python S60. It's  necessary because some applications wrt-based and others, cannot have full access of device resources. So, the http server could present such resources through web services Rest
